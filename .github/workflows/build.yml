@@ -5,3 +5,20 @@ on:
   schedule:
     - cron: '0 */6 * * *'
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Клонирование репозитория в директорию раннера
+        uses: actions/checkout@v4
+
+      - name: Получение тега последнего релиза Naive Forwardproxy
+        id: get_tag
+        run: |
+          LATEST_TAG=$(curl -s https://api.github.com/repos/klzgrad/forwardproxy/releases/latest | jq -r '.tag_name')
+          echo "Обнаруженный тег: $LATEST_TAG"
+          echo "release_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
