@@ -1,0 +1,7 @@
+name: Сборка контейнера с Caddy + Naive Forwardproxy
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
