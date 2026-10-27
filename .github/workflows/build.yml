@@ -18,8 +18,15 @@ jobs:
 
       - name: Получение тега последнего релиза Naive Forwardproxy
         id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST_TAG=$(curl -s https://api.github.com/repos/klzgrad/forwardproxy/releases/latest | jq -r '.tag_name')
+          set -e
+          LATEST_TAG=$(curl -s -H "Authorization: token $GH_TOKEN" https://api.github.com/repos/klzgrad/forwardproxy/releases/latest | jq -r '.tag_name')
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "Не удалось получить тег релиза от GitHub API"
+            exit 1
+          fi
           echo "Обнаруженный тег: $LATEST_TAG"
           echo "release_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
@@ -35,7 +42,7 @@ jobs:
         run: |
           IMAGE_NAME="ghcr.io/${{ github.actor }}/naive-forwardproxy-docker"
           TAG="${{ steps.get_tag.outputs.release_tag }}"
-          if docker manifest inspect $IMAGE_NAME:$TAG > dev/null 2>&1; then
+          if docker manifest inspect $IMAGE_NAME:$TAG > /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
