@@ -34,13 +34,13 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: xeente
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Проверка текущего образа
         id: check_image
         run: |
-          IMAGE_NAME="ghcr.io/${{ github.actor }}/naive-forwardproxy-docker"
+          IMAGE_NAME="ghcr.io/xeente/naive-forwardproxy-docker"
           TAG="${{ steps.get_tag.outputs.release_tag }}"
           if docker manifest inspect $IMAGE_NAME:$TAG > /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -62,7 +62,7 @@ jobs:
           build-args: |
             RELEASE_TAG=${{ steps.get_tag.outputs.release_tag }}
           tags: |
-            ghcr.io/${{ github.actor }}/naive-forwardproxy-docker:latest
-            ghcr.io/${{ github.actor }}/naive-forwardproxy-docker:${{ steps.get_tag.outputs.release_tag }}
+            ghcr.io/xeente/naive-forwardproxy-docker:latest
+            ghcr.io/xeente/naive-forwardproxy-docker:${{ steps.get_tag.outputs.release_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
