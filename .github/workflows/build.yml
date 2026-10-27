@@ -22,3 +22,40 @@ jobs:
           LATEST_TAG=$(curl -s https://api.github.com/repos/klzgrad/forwardproxy/releases/latest | jq -r '.tag_name')
           echo "Обнаруженный тег: $LATEST_TAG"
           echo "release_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Авторизация в реестре контейнеров GitHub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Проверка текущего образа
+        id: check_image
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.actor }}/naive-forwardproxy-docker"
+          TAG="${{ steps.get_tag.outputs.release_tag }}"
+          if docker manifest inspect $IMAGE_NAME:$TAG > dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Настройка BuildX
+        if: steps.check_image.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Сборка и пуш образа
+        if: steps.check_image.outputs.exists == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            RELEASE_TAG=${{ steps.get_tag.outputs.release_tag }}
+          tags: |
+            ghcr.io/${{ github.actor }}/naive-forwardproxy-docker:latest
+            ghcr.io/${{ github.actor }}/naive-forwardproxy-docker:${{ steps.get_tag.outputs.release_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
